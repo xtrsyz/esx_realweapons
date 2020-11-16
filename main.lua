@@ -13,30 +13,27 @@ Citizen.CreateThread(function()
 	end
 
 	while true do
-
 		Citizen.Wait(500)
 		local playerPed = PlayerPedId()
 
-		for i=1, #Config.RealWeapons, 1 do
+		for i=1, #Config.RealWeapons, 1 do		
+			if Config.RealWeapons[i].model ~= nil and Config.RealWeapons[i].model ~= '' then
+				local weaponHash = GetHashKey(Config.RealWeapons[i].name)
+				if HasPedGotWeapon(playerPed, weaponHash, false) then
+					local onPlayer = false
+					for weaponName, entity in pairs(Weapons) do
+						if weaponName == Config.RealWeapons[i].name then
+							onPlayer = true
+							break
+						end
+					end
 
-			local weaponHash = GetHashKey(Config.RealWeapons[i].name)
-
-			if HasPedGotWeapon(playerPed, weaponHash, false) then
-				local onPlayer = false
-
-				for weaponName, entity in pairs(Weapons) do
-					if weaponName == Config.RealWeapons[i].name then
-						onPlayer = true
-						break
+					if not onPlayer and weaponHash ~= GetSelectedPedWeapon(playerPed) then
+						SetGear(Config.RealWeapons[i].name)
+					elseif onPlayer and weaponHash == GetSelectedPedWeapon(playerPed) then
+						RemoveGear(Config.RealWeapons[i].name)
 					end
 				end
-
-				if not onPlayer and weaponHash ~= GetSelectedPedWeapon(playerPed) then
-					SetGear(Config.RealWeapons[i].name)
-				elseif onPlayer and weaponHash == GetSelectedPedWeapon(playerPed) then
-					RemoveGear(Config.RealWeapons[i].name)
-				end
-
 			end
 		end
 	end
@@ -87,6 +84,7 @@ function SetGear(weapon)
 	local playerPed  = PlayerPedId()
 	local model      = nil
 	local playerData = ESX.GetPlayerData()
+	local coords = GetEntityCoords(playerPed)
 
 	for i=1, #Config.RealWeapons, 1 do
 		if Config.RealWeapons[i].name == weapon then
@@ -102,13 +100,8 @@ function SetGear(weapon)
 		end
 	end
 
-	ESX.Game.SpawnObject(model, {
-		x = x,
-		y = y,
-		z = z
-	}, function(object)
+	ESX.Game.SpawnObject(model, coords, function(object)
 		local boneIndex = GetPedBoneIndex(playerPed, bone)
-		local bonePos 	= GetWorldPositionOfEntityBone(playerPed, boneIndex)
 		AttachEntityToEntity(object, playerPed, boneIndex, boneX, boneY, boneZ, boneXRot, boneYRot, boneZRot, false, false, false, false, 2, true)
 		Weapons[weapon] = object
 	end)
@@ -128,6 +121,7 @@ function SetGears()
 	local model      = nil
 	local playerData = ESX.GetPlayerData()
 	local weapon 	 = nil
+	local coords = GetEntityCoords(playerPed)
 	
 	for i=1, #playerData.loadout, 1 do
 		
@@ -151,14 +145,8 @@ function SetGears()
 
 		local _wait = true
 
-		ESX.Game.SpawnObject(model, {
-			x = x,
-			y = y,
-			z = z
-		}, function(object)
+		ESX.Game.SpawnObject(model, coords, function(object)
 			local boneIndex = GetPedBoneIndex(playerPed, bone)
-			local bonePos 	= GetWorldPositionOfEntityBone(playerPed, boneIndex)
-
 			AttachEntityToEntity(object, playerPed, boneIndex, boneX, boneY, boneZ, boneXRot, boneYRot, boneZRot, false, false, false, false, 2, true)
 
 			Weapons[weapon] = object
